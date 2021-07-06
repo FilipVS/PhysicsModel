@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 
 namespace PhysicsModel
 {
@@ -91,6 +92,7 @@ namespace PhysicsModel
         /// <summary>
         /// meters/second/second
         /// </summary>
+        [Description ("m/ss")]
         MetersPerSecondPerSecond = 0,
 
     }

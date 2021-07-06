@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -100,11 +101,13 @@ namespace PhysicsModel
         /// <summary>
         /// meters/second
         /// </summary>
+        [Description ("m/s")]
         MetersPerSecond = 0,
 
         /// <summary>
         /// kilometers/hour
         /// </summary>
+        [Description ("km/h")]
         KilometrsPerHour
     }
 }

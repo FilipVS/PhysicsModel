@@ -8,13 +8,16 @@
         xmlns:controls="clr-namespace:ModelDisplay.Controls" 
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
         xmlns:phys="clr-namespace:PhysicsModel;assembly=PhysicsModel"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800"
+        MinHeight="300" MinWidth="600"
+        WindowStartupLocation="CenterScreen">
 
     <!-- Resources -->
     <Window.Resources>
         
         <!-- Value converters -->
         <local:DecimalRounderValueConverter x:Key="decimalRounderConverter"/>
+        <local:DescriptionOfEnumValueConverter x:Key="enumDescriptionConverter"/>
 
     </Window.Resources>
     
@@ -33,8 +36,32 @@
 
         <!-- Toolbar (play, pause...) -->
         <ToolBar DockPanel.Dock="Top">
-            <Button Padding="2" Margin="5" Command="MediaCommands.Play">Play</Button>
+            <Button Padding="2" Margin="15 5" Command="MediaCommands.Play">Play</Button>
         </ToolBar>
+
+        <!-- Choice between all the placed charges -->
+        <ListBox DockPanel.Dock="Left" IsEnabled="{Binding AllowChargeSelection}"
+                 SelectedItem="{Binding SelectedParticleElement}" MinWidth="30" Margin="10 10 0 10">
+
+            <ListBox.ItemsSource>
+                <MultiBinding>
+                    <MultiBinding.Converter>
+                        <local:UniteParticleEnumerableAndParticleMultiValueConverter/>
+                    </MultiBinding.Converter>
+
+                    <Binding Path="ForceFieldElements"/>
+                    <Binding Path="ChargedParticleElement"/>
+                </MultiBinding>
+            </ListBox.ItemsSource>
+
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <TextBlock HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Path=ChargeToDisplay}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
         <!-- Editing individual placed charges -->
         <GroupBox DockPanel.Dock="Right" BorderBrush="Red" BorderThickness="2" Margin="5 10 10 10">
@@ -42,7 +69,7 @@
                 <CheckBox IsChecked="{Binding AllowChargeSelection}">Allow charge selection</CheckBox>
             </GroupBox.Header>
             
-            <StackPanel DataContext="{Binding SelectedParticleElement.ChargeToDisplay}" Margin="2,5">
+            <StackPanel DataContext="{Binding SelectedParticleElement.ChargeToDisplay}" Margin="2,5" Width="200">
 
                 <StackPanel.Visibility>
                     <MultiBinding>
@@ -58,34 +85,55 @@
                     <!-- Default style for inside text boxes -->
                     <Style TargetType="TextBlock">
                         <Setter Property="FontSize" Value="14"/>
+                        <Setter Property="Margin" Value="0,2"/>
                     </Style>
                 </StackPanel.Resources>
                 
                 <TextBlock FontSize="15" FontWeight="Bold" Text="{Binding FallbackValue='Charge to display'}"/>
 
                 <!-- Position display -->
-                <WrapPanel Orientation="Horizontal">
+                <StackPanel Orientation="Horizontal">
                     <TextBlock xml:space="preserve">Position: </TextBlock>
                     <TextBlock Text="{Binding Path=Position.X, Converter={StaticResource decimalRounderConverter}}"/>
                     <TextBlock xml:space="preserve">, </TextBlock>
                     <TextBlock Text="{Binding Path=Position.Y, Converter={StaticResource decimalRounderConverter}}"/>
-                </WrapPanel>
+                </StackPanel>
+
+                <!-- Velocity display -->
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock xml:space="preserve">Velocity: </TextBlock>
+                    <TextBlock Text="{Binding Path=Velocity.Velocity.X, Converter={StaticResource decimalRounderConverter}}"/>
+                    <TextBlock xml:space="preserve">, </TextBlock>
+                    <TextBlock Text="{Binding Path=Velocity.Velocity.Y, Converter={StaticResource decimalRounderConverter}}"/>
+                    <TextBlock xml:space="preserve"> </TextBlock>
+                    <TextBlock Text="{Binding Path=Velocity.Unit, Converter={StaticResource enumDescriptionConverter}}"/>
+                </StackPanel>
+
+                <!-- Acceleration display -->
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock xml:space="preserve">Acceleration: </TextBlock>
+                    <TextBlock Text="{Binding Path=Acceleration.Acceleration.X, Converter={StaticResource decimalRounderConverter}}"/>
+                    <TextBlock xml:space="preserve">, </TextBlock>
+                    <TextBlock Text="{Binding Path=Acceleration.Acceleration.Y, Converter={StaticResource decimalRounderConverter}}"/>
+                    <TextBlock xml:space="preserve"> </TextBlock>
+                    <TextBlock Text="{Binding Path=Acceleration.Unit, Converter={StaticResource enumDescriptionConverter}}"/>
+                </StackPanel>
 
                 <!-- Charge display -->
-                <WrapPanel Orientation="Horizontal">
+                <StackPanel Orientation="Horizontal">
                     <TextBlock xml:space="preserve">Charge: </TextBlock>
                     <TextBlock Text="{Binding Path=Charge.Charge}"/>
                     <TextBlock xml:space="preserve"> </TextBlock>
                     <TextBlock Text="{Binding Path=Charge.Unit}"/>
-                </WrapPanel>
+                </StackPanel>
 
                 <!-- Mass display -->
-                <WrapPanel Orientation="Horizontal">
+                <StackPanel Orientation="Horizontal">
                     <TextBlock xml:space="preserve">Mass: </TextBlock>
                     <TextBlock Text="{Binding Path=Mass.Mass}"/>
                     <TextBlock xml:space="preserve"> </TextBlock>
                     <TextBlock Text="{Binding Path=Mass.Unit}"/>
-                </WrapPanel>
+                </StackPanel>
                 
                 <!-- Delete button -->
                 <Button x:Name="deleteBtn" Margin="20" Padding="5" Command="ApplicationCommands.Delete">Delete</Button>

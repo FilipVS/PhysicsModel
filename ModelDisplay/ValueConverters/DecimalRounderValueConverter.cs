@@ -23,7 +23,11 @@ namespace ModelDisplay
         /// <returns>A rounded value of the decimal</returns>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return Math.Round(Decimal.Parse(value.ToString()));
+            string str = value.ToString();
+
+            double dc = Double.Parse(str);
+
+            return Math.Round(dc);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

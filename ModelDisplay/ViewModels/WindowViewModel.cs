@@ -8,6 +8,8 @@ using PhysicsModel;
 using ModelDisplay.Controls;
 using System.Windows.Controls;
 using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Collections.ObjectModel;
 
 namespace ModelDisplay
 {
@@ -27,10 +29,25 @@ namespace ModelDisplay
         // How many seconds long is each single move (from one frame to another)
         private const double MOVE_LENGTH = 1d/60d;
 
+        // How long does the thread wait between updating frames
+        private const int MILLISECONDS_BETWEEN_FRAMES = 15;
+
         // Movement precision (1-infinity), how precisely calculated is the movement
         private const int MOVEMENT_PRECISION = 10;
 
         //
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public WindowViewModel()
+        {
+            ForceFieldElements.CollectionChanged += ForceFieldElements_CollectionChanged;
+        }
 
         #endregion
 
@@ -45,6 +62,11 @@ namespace ModelDisplay
         /// Allow selecting and editing of placed charges
         /// </summary>
         private bool allowChargeSelection = true;
+
+        /// <summary>
+        /// The display element for the charged particle
+        /// </summary>
+        private ChargeDisplayerRadioButton chargedParticleElement = null;
 
         /// <summary>
         /// The particle that is currently selected
@@ -88,7 +110,7 @@ namespace ModelDisplay
         /// <summary>
         /// The display elements for the individual force field elements
         /// </summary>
-        public List<ChargeDisplayerRadioButton> ForceFieldElements { get; set; } = new List<ChargeDisplayerRadioButton>();
+        public ObservableCollection<ChargeDisplayerRadioButton> ForceFieldElements { get; set; } = new ObservableCollection<ChargeDisplayerRadioButton>();
 
         /// <summary>
         /// Returns an electric force field based on the placed stationary charge displayers
@@ -107,7 +129,15 @@ namespace ModelDisplay
         /// <summary>
         /// The display element for the charged particle
         /// </summary>
-        public ChargeDisplayerRadioButton ChargedParticleElement { get; set; } = null;
+        public ChargeDisplayerRadioButton ChargedParticleElement
+        {
+            get { return chargedParticleElement; }
+            set
+            {
+                chargedParticleElement = value;
+                OnPropertyChanged(nameof(ChargedParticleElement));
+            }
+        }
 
         /// <summary>
         /// The particle that is currently selected
@@ -117,7 +147,14 @@ namespace ModelDisplay
             get { return selectedParticleElement; }
             set
             {
+                if(SelectedParticleElement != null)
+                    SelectedParticleElement.IsChecked = false;
+
                 selectedParticleElement = value;
+
+                if(SelectedParticleElement != null)
+                    SelectedParticleElement.IsChecked = true;
+
                 OnPropertyChanged(nameof(SelectedParticleElement));
             }
         }
@@ -174,12 +211,7 @@ namespace ModelDisplay
             // If selecting is allowed, select the newely placed particle
             if (AllowChargeSelection)
             {
-                // Deselect previous particle element
-                if(selectedParticleElement != null)
-                    SelectedParticleElement.IsChecked = false;
-
                 // Select this one
-                newParticleDisplayer.IsChecked = true;
                 SelectedParticleElement = newParticleDisplayer;
             }
             // Otherwise disallow hit testing on it
@@ -198,6 +230,11 @@ namespace ModelDisplay
         /// </summary>
         public async void Move()
         {
+            // Stopwatch to meassure time between frames
+            Stopwatch watch = new Stopwatch();
+            // List to store five last ellapsed times between frames
+            List<int> ellapsedMillisecondsBetweenFrames = new List<int>() { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
             // If no movable charge specified, return
             if (ChargedParticleElement == null)
                 return;
@@ -212,8 +249,27 @@ namespace ModelDisplay
                 // Move the particle
                 await ChargedParticleElement.ChargeToDisplay.MoveInElectricFieldAsync(ForceField, MOVE_LENGTH, MOVEMENT_PRECISION);
 
-                // Wait for the actual move length in milliseconds
-                await Task.Delay((int)Math.Round(1000 * MOVE_LENGTH));
+                // TODO: Improve
+                // Force the property to call OnPropertyChanged
+                ChargeDisplayerRadioButton displayer = SelectedParticleElement;
+                SelectedParticleElement = null;
+                SelectedParticleElement = displayer;
+
+                // Get the averadge ellapsed time between last five frames
+                int averadgeEllapsed = (int)Math.Round(Enumerable.Average(ellapsedMillisecondsBetweenFrames));
+
+                // Stop meassuring ellapsed time
+                watch.Stop();
+                // Save the ellapsed time to the list and remove the first one in the order (to maintain five last ellapsed times)
+                ellapsedMillisecondsBetweenFrames.Add((int)watch.ElapsedMilliseconds);
+                ellapsedMillisecondsBetweenFrames.RemoveAt(0);
+
+                // Wait for the actual move length in milliseconds (minus the averadge time between frames)
+                await Task.Delay((MILLISECONDS_BETWEEN_FRAMES - averadgeEllapsed) > 0 ? (MILLISECONDS_BETWEEN_FRAMES - averadgeEllapsed) : 0);
+
+                // Reset the stopwatch
+                watch = new Stopwatch();
+                watch.Start();
 
                 // If the particle doesn't exist anymore, return
                 if (ChargedParticleElement == null)
@@ -264,10 +320,6 @@ namespace ModelDisplay
                 if(displayer != null)
                 {
                     displayer.IsHitTestVisible = allow;
-
-                    // Uncheck the element
-                    if (allow == false)
-                        displayer.IsChecked = false;
                 }
             }
 
@@ -275,14 +327,24 @@ namespace ModelDisplay
             if(ChargedParticleElement != null)
             {
                 ChargedParticleElement.IsHitTestVisible = allow;
-
-                // Uncheck the element
-                if (allow == false)
-                    ChargedParticleElement.IsChecked = false;
             }
 
             // Unselect the current element
             SelectedParticleElement = null;
+        }
+
+        #endregion
+
+        #region Event handlers
+
+        /// <summary>
+        /// Gets called when the ForceFieldElements collection is changed and in turns calls the OnPropertyChanged(ForceFieldElements)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ForceFieldElements_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(ForceFieldElements));
         }
 
         #endregion
