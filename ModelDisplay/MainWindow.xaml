@@ -1,0 +1,137 @@
+﻿<Window x:Class="ModelDisplay.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ModelDisplay"
+        mc:Ignorable="d"
+        xmlns:controls="clr-namespace:ModelDisplay.Controls" 
+        xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        xmlns:phys="clr-namespace:PhysicsModel;assembly=PhysicsModel"
+        Title="MainWindow" Height="450" Width="800">
+
+    <!-- Resources -->
+    <Window.Resources>
+        
+        <!-- Value converters -->
+        <local:DecimalRounderValueConverter x:Key="decimalRounderConverter"/>
+
+    </Window.Resources>
+    
+    <!-- The data context of this widow will be instance of class WindowViewModel -->
+    <Window.DataContext>
+        <local:WindowViewModel x:Name="viewModel"></local:WindowViewModel>
+    </Window.DataContext>
+    
+    <!-- Commands -->
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Delete" CanExecute="deleteCommand_CanExecute" Executed="deleteCommand_Executed"/>
+        <CommandBinding Command="MediaCommands.Play" CanExecute="playCommand_CanExecute" Executed="playCommand_Executed"/>
+    </Window.CommandBindings>
+    
+    <DockPanel LastChildFill="True">
+
+        <!-- Toolbar (play, pause...) -->
+        <ToolBar DockPanel.Dock="Top">
+            <Button Padding="2" Margin="5" Command="MediaCommands.Play">Play</Button>
+        </ToolBar>
+
+        <!-- Editing individual placed charges -->
+        <GroupBox DockPanel.Dock="Right" BorderBrush="Red" BorderThickness="2" Margin="5 10 10 10">
+            <GroupBox.Header>
+                <CheckBox IsChecked="{Binding AllowChargeSelection}">Allow charge selection</CheckBox>
+            </GroupBox.Header>
+            
+            <StackPanel DataContext="{Binding SelectedParticleElement.ChargeToDisplay}" Margin="2,5">
+
+                <StackPanel.Visibility>
+                    <MultiBinding>
+                        <MultiBinding.Converter>
+                            <local:ChargeSelectionEnablerMultiValueConverter/>
+                        </MultiBinding.Converter>
+                        <Binding ElementName="viewModel" Path="AllowChargeSelection"/>
+                        <Binding ElementName="viewModel" Path="SelectedParticleElement"/>
+                    </MultiBinding>
+                </StackPanel.Visibility>
+
+                <StackPanel.Resources>
+                    <!-- Default style for inside text boxes -->
+                    <Style TargetType="TextBlock">
+                        <Setter Property="FontSize" Value="14"/>
+                    </Style>
+                </StackPanel.Resources>
+                
+                <TextBlock FontSize="15" FontWeight="Bold" Text="{Binding FallbackValue='Charge to display'}"/>
+
+                <!-- Position display -->
+                <WrapPanel Orientation="Horizontal">
+                    <TextBlock xml:space="preserve">Position: </TextBlock>
+                    <TextBlock Text="{Binding Path=Position.X, Converter={StaticResource decimalRounderConverter}}"/>
+                    <TextBlock xml:space="preserve">, </TextBlock>
+                    <TextBlock Text="{Binding Path=Position.Y, Converter={StaticResource decimalRounderConverter}}"/>
+                </WrapPanel>
+
+                <!-- Charge display -->
+                <WrapPanel Orientation="Horizontal">
+                    <TextBlock xml:space="preserve">Charge: </TextBlock>
+                    <TextBlock Text="{Binding Path=Charge.Charge}"/>
+                    <TextBlock xml:space="preserve"> </TextBlock>
+                    <TextBlock Text="{Binding Path=Charge.Unit}"/>
+                </WrapPanel>
+
+                <!-- Mass display -->
+                <WrapPanel Orientation="Horizontal">
+                    <TextBlock xml:space="preserve">Mass: </TextBlock>
+                    <TextBlock Text="{Binding Path=Mass.Mass}"/>
+                    <TextBlock xml:space="preserve"> </TextBlock>
+                    <TextBlock Text="{Binding Path=Mass.Unit}"/>
+                </WrapPanel>
+                
+                <!-- Delete button -->
+                <Button x:Name="deleteBtn" Margin="20" Padding="5" Command="ApplicationCommands.Delete">Delete</Button>
+
+            </StackPanel>
+        </GroupBox>
+        
+        <!-- Choices of particles -->
+        <DockPanel x:Name="dockPanelWithParticles"
+            DockPanel.Dock="Bottom" LastChildFill="False" ButtonBase.Click="panelWithCharges_Click">
+
+            <!-- Stationary particles choice -->
+            <GroupBox Header="Stationary particles" Margin="50 10 10 10" DockPanel.Dock="Left">
+                <StackPanel Orientation="Horizontal">
+
+                    <controls:RadioButtonWithParticleType Padding="15" Margin="5" ParticleType="StationaryPositive"
+                                 GroupName="particles" IsChecked="True">+Q
+                    </controls:RadioButtonWithParticleType>
+                    
+                    <controls:RadioButtonWithParticleType Padding="15" Margin="5" ParticleType="StationaryNegative"
+                                 GroupName="particles">-Q
+                    </controls:RadioButtonWithParticleType>
+                    
+                </StackPanel>
+            </GroupBox>
+            
+            <!-- Movable particles choice -->
+            <GroupBox Header="Movable particles" Margin="10 10 50 10" DockPanel.Dock="Right">
+                <StackPanel Orientation="Horizontal">
+
+                    <controls:RadioButtonWithParticleType Padding="15" Margin="5" ParticleType="MovablePositive"
+                                                    GroupName="particles">+q
+                    </controls:RadioButtonWithParticleType>
+                    <controls:RadioButtonWithParticleType Padding="15" Margin="5" ParticleType="MovableNegative"
+                                                       GroupName="particles">-q
+                    </controls:RadioButtonWithParticleType>
+
+                </StackPanel>
+            </GroupBox>
+
+        </DockPanel>
+
+            <!-- The Canvas that will be showing the particles -->
+        <Canvas x:Name="canvasSpace" Background="LightBlue"  MouseUp="canvasSpace_MouseUp" Margin="10"
+            ButtonBase.Click="canvasSpace_Click" SizeChanged="canvasSpace_SizeChanged" ClipToBounds="True"/>
+
+    </DockPanel>
+    
+</Window>
