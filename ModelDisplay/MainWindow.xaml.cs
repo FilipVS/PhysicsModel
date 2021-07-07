@@ -170,8 +170,8 @@ namespace ModelDisplay
             // Get the correct type view model
             WindowViewModel viewModel = this.DataContext as WindowViewModel;
 
-            // Play command can be executed only when a movable particle is present
-            e.CanExecute = viewModel.ChargedParticleElement != null;
+            // Play command can be executed only when a movable particle is present and the simulation isn't already running
+            e.CanExecute = (viewModel.ChargedParticleElement != null && viewModel.SimulationStatus != SimulationStatus.Play);
         }
 
         /// <summary>
@@ -184,7 +184,39 @@ namespace ModelDisplay
             // Get the correct type view model
             WindowViewModel viewModel = this.DataContext as WindowViewModel;
 
-            viewModel.Move();
+            viewModel.Move(canvasSpace);
+        }
+
+        #endregion
+
+        #region Pause Command
+
+        /// <summary>
+        /// Can the simulation be paused (only when the simulation is playing)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            // Get the proper type view model
+            WindowViewModel viewModel = this.DataContext as WindowViewModel;
+
+            // Set the CanExecute flag depending on the simulation status (the simulation can only be paused if it's already running)
+            e.CanExecute = (viewModel.SimulationStatus == SimulationStatus.Play);
+        }
+
+        /// <summary>
+        /// Pause the simulation
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            // Get the proper type view model
+            WindowViewModel viewModel = this.DataContext as WindowViewModel;
+
+            // Pause the simulation
+            viewModel.Pause();
         }
 
         #endregion
@@ -212,10 +244,7 @@ namespace ModelDisplay
         }
 
 
-
-
         #endregion
 
-        
     }
 }

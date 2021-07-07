@@ -30,6 +30,7 @@
     <Window.CommandBindings>
         <CommandBinding Command="ApplicationCommands.Delete" CanExecute="deleteCommand_CanExecute" Executed="deleteCommand_Executed"/>
         <CommandBinding Command="MediaCommands.Play" CanExecute="playCommand_CanExecute" Executed="playCommand_Executed"/>
+        <CommandBinding Command="MediaCommands.Pause" CanExecute="CommandBinding_CanExecute" Executed="CommandBinding_Executed"/>
     </Window.CommandBindings>
     
     <DockPanel LastChildFill="True">
@@ -37,6 +38,7 @@
         <!-- Toolbar (play, pause...) -->
         <ToolBar DockPanel.Dock="Top">
             <Button Padding="2" Margin="15 5" Command="MediaCommands.Play">Play</Button>
+            <Button Padding="2" Margin="15 5" Command="MediaCommands.Pause">Pause</Button>
         </ToolBar>
 
         <!-- Choice between all the placed charges -->

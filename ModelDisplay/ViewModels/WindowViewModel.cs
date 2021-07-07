@@ -35,7 +35,8 @@ namespace ModelDisplay
         // Movement precision (1-infinity), how precisely calculated is the movement
         private const int MOVEMENT_PRECISION = 10;
 
-        //
+        // When moving particles get this far from point [0,0], they get terminated
+        private const int TERMINATION_DISTANCE = 1000000;
 
         #endregion
 
@@ -73,6 +74,11 @@ namespace ModelDisplay
         /// </summary>
         private ChargeDisplayerRadioButton selectedParticleElement = null;
 
+        /// <summary>
+        /// The status of the simulation
+        /// </summary>
+        private SimulationStatus simulationStatus = SimulationStatus.Pause;
+
         #endregion
 
         #region Public properties
@@ -104,6 +110,16 @@ namespace ModelDisplay
                 ChangeHitTestingOfDisplayer(value);
 
                 OnPropertyChanged(nameof(AllowChargeSelection));
+
+                // If charge selection was forbidden, return
+                if (!AllowChargeSelection)
+                    return;
+
+                // Select the movable charged/force field element charge if available
+                if (ChargedParticleElement != null)
+                    SelectedParticleElement = ChargedParticleElement;
+                else if (ForceFieldElements.Count > 0 && ForceFieldElements[0] != null)
+                    SelectedParticleElement = ForceFieldElements[0];
             }
         }
 
@@ -156,6 +172,19 @@ namespace ModelDisplay
                     SelectedParticleElement.IsChecked = true;
 
                 OnPropertyChanged(nameof(SelectedParticleElement));
+            }
+        }
+
+        /// <summary>
+        /// The status of the simulation
+        /// </summary>
+        public SimulationStatus SimulationStatus
+        {
+            get { return simulationStatus; }
+            set
+            {
+                simulationStatus = value;
+                OnPropertyChanged(nameof(SimulationStatus));
             }
         }
 
@@ -228,8 +257,12 @@ namespace ModelDisplay
         /// <summary>
         /// Start the movement of the movable charge
         /// </summary>
-        public async void Move()
+        /// <param name="drawingCanvas">The canvas across which will be the particle moving</param>
+        public async void Move(Canvas drawingCanvas)
         {
+            // Set the simulation status
+            SimulationStatus = SimulationStatus.Play;
+
             // Stopwatch to meassure time between frames
             Stopwatch watch = new Stopwatch();
             // List to store five last ellapsed times between frames
@@ -237,10 +270,13 @@ namespace ModelDisplay
 
             // If no movable charge specified, return
             if (ChargedParticleElement == null)
+            {
+                SimulationStatus = SimulationStatus.Pause;
                 return;
+            }
 
             // The movement itself
-            while (true)
+            while (SimulationStatus == SimulationStatus.Play)
             {
                 // If the particle doesn't exist anymore, return
                 if (ChargedParticleElement == null)
@@ -248,6 +284,15 @@ namespace ModelDisplay
 
                 // Move the particle
                 await ChargedParticleElement.ChargeToDisplay.MoveInElectricFieldAsync(ForceField, MOVE_LENGTH, MOVEMENT_PRECISION);
+
+                // If the particle got too far, terminate it and return
+                if(ChargedParticleElement.ChargeToDisplay.Position.Magnitude > TERMINATION_DISTANCE)
+                {
+                    drawingCanvas.Children.Remove(ChargedParticleElement);
+                    ChargedParticleElement = null;
+                    SimulationStatus = SimulationStatus.Pause;
+                    return;
+                }
 
                 // TODO: Improve
                 // Force the property to call OnPropertyChanged
@@ -273,7 +318,10 @@ namespace ModelDisplay
 
                 // If the particle doesn't exist anymore, return
                 if (ChargedParticleElement == null)
+                {
+                    SimulationStatus = SimulationStatus.Pause;
                     return;
+                }
 
                 // Move the display object that represents the particle
                 Canvas.SetLeft(ChargedParticleElement, ChargedParticleElement.ChargeToDisplay.Position.X);
@@ -302,6 +350,14 @@ namespace ModelDisplay
 
             // Make the selected element null
             SelectedParticleElement = null;
+        }
+
+        /// <summary>
+        /// Pauses the simulation
+        /// </summary>
+        public void Pause()
+        {
+            SimulationStatus = SimulationStatus.Pause;
         }
 
         #endregion

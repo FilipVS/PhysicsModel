@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="clr-namespace:ModelDisplay.Controls">
+                    xmlns:controls="clr-namespace:ModelDisplay.Controls"
+                    xmlns:local="clr-namespace:ModelDisplay">
 
     <!-- Default style for all ChargeDisplayerRadioButtons -->
     <Style TargetType="controls:ChargeDisplayerRadioButton">
@@ -11,6 +12,15 @@
                 <ControlTemplate TargetType="RadioButton">
 
                     <Grid>
+                        <!-- The margin makes the mouse place the center of the drawing -->
+                        <Grid.Margin>
+                            <Binding Path="OutlineCircleRadius">
+                                <Binding.Converter>
+                                    <local:DoubleToThicknessLeftUpValueConverter/>
+                                </Binding.Converter>
+                            </Binding>
+                        </Grid.Margin>
+
                         <Ellipse x:Name="outlineBorder"
                         Width="{Binding OutlineCircleRadius}" Height="{Binding OutlineCircleRadius}"
                                  HorizontalAlignment="Center" VerticalAlignment="Center"
